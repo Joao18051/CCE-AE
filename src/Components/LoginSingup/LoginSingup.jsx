@@ -5,6 +5,8 @@ import './LoginSingup.css';
 import emailIcon from '../Assets/email.svg';
 import passwordIcon from '../Assets/password.svg';
 import personIcon from '../Assets/person.svg';
+import eyeFill from '../Assets/eye-fill.svg';
+import eyeSlashFill from '../Assets/eye-slash-fill.svg';
 
 export default function LoginSingup() {
   const [action, setAction] = useState("login");
@@ -19,6 +21,7 @@ export default function LoginSingup() {
     email: '',
     password: ''
   });
+  const [showPassword, setShowPassword] = useState(false);
 
   const validateForm = () => {
     const newErrors = {
@@ -29,18 +32,16 @@ export default function LoginSingup() {
 
     let isValid = true;
 
-    // Validação do nome (apenas para cadastro)
     if (action === 'signup') {
       if (!formData.name.trim()) {
         newErrors.name = 'Nome é obrigatório';
         isValid = false;
-      } else if (formData.name.length < 3) {
-        newErrors.name = 'Nome deve ter pelo menos 3 caracteres';
+      } else if (formData.name.length < 1) {
+        newErrors.name = 'Nome deve ter pelo menos 1 caractere';
         isValid = false;
       }
     }
 
-    // Validação do email
     if (!formData.email.trim()) {
       newErrors.email = 'E-mail é obrigatório';
       isValid = false;
@@ -49,13 +50,27 @@ export default function LoginSingup() {
       isValid = false;
     }
 
-    // Validação da senha
     if (!formData.password.trim()) {
       newErrors.password = 'Senha é obrigatória';
       isValid = false;
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Senha deve ter pelo menos 6 caracteres';
+    } else if (formData.password.length < 8) {
+      newErrors.password = 'Senha deve ter pelo menos 8 caracteres';
       isValid = false;
+    } else {
+      const hasUpperCase = /[A-Z]/.test(formData.password);
+      const hasNumber = /[0-9]/.test(formData.password);
+      const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(formData.password);
+      
+      const missingRequirements = [];
+      
+      if (!hasUpperCase) missingRequirements.push('uma letra maiúscula');
+      if (!hasNumber) missingRequirements.push('um número');
+      if (!hasSpecialChar) missingRequirements.push('um caractere especial');
+      
+      if (missingRequirements.length > 0) {
+        newErrors.password = `A senha deve conter ${missingRequirements.join(', ')}`;
+        isValid = false;
+      }
     }
 
     setErrors(newErrors);
@@ -98,8 +113,11 @@ export default function LoginSingup() {
       ...formData,
       [e.target.name]: e.target.value
     });
-    // Limpar erro específico ao digitar
     setErrors(prev => ({ ...prev, [e.target.name]: '' }));
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
   };
 
   return (
@@ -141,15 +159,21 @@ export default function LoginSingup() {
             {errors.email && <span className="error-field">{errors.email}</span>}
           </div>
 
-          <div className="input-container">
+          <div className="input-container" style={{ paddingBottom: '17px' }}>
             <div className="input">
               <img src={passwordIcon} alt="Senha" />
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 name="password"
                 placeholder="Senha"
                 value={formData.password}
                 onChange={handleInputChange}
+              />
+              <img 
+                src={showPassword ? eyeSlashFill : eyeFill} 
+                alt="Toggle visibilidade" 
+                className="password-toggle"
+                onClick={togglePasswordVisibility}
               />
             </div>
             {errors.password && <span className="error-field">{errors.password}</span>}
