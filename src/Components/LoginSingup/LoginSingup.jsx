@@ -1,7 +1,9 @@
+// src/Components/LoginSingup/LoginSingup.jsx
 import React, { useState } from 'react';
 import axios from 'axios';
-import './LoginSingup.css';
+import { useNavigate } from 'react-router-dom'; // for programmatic navigation
 
+import './LoginSingup.css';
 import emailIcon from '../Assets/email.svg';
 import passwordIcon from '../Assets/password.svg';
 import personIcon from '../Assets/person.svg';
@@ -9,7 +11,8 @@ import eyeFill from '../Assets/eye-fill.svg';
 import eyeSlashFill from '../Assets/eye-slash-fill.svg';
 
 export default function LoginSingup() {
-  const [action, setAction] = useState("login");
+  const navigate = useNavigate(); // turn0search0
+  const [action, setAction] = useState('login');
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -19,17 +22,13 @@ export default function LoginSingup() {
   const [errors, setErrors] = useState({
     name: '',
     email: '',
-    password: ''
+    password: '',
+    form: ''
   });
   const [showPassword, setShowPassword] = useState(false);
 
   const validateForm = () => {
-    const newErrors = {
-      name: '',
-      email: '',
-      password: ''
-    };
-
+    const newErrors = { name: '', email: '', password: '' };
     let isValid = true;
 
     if (action === 'signup') {
@@ -60,71 +59,74 @@ export default function LoginSingup() {
       const hasUpperCase = /[A-Z]/.test(formData.password);
       const hasNumber = /[0-9]/.test(formData.password);
       const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(formData.password);
-      
-      const missingRequirements = [];
-      
-      if (!hasUpperCase) missingRequirements.push('uma letra maiúscula');
-      if (!hasNumber) missingRequirements.push('um número');
-      if (!hasSpecialChar) missingRequirements.push('um caractere especial');
-      
-      if (missingRequirements.length > 0) {
-        newErrors.password = `A senha deve conter ${missingRequirements.join(', ')}`;
+
+      const missing = [];
+      if (!hasUpperCase) missing.push('uma letra maiúscula');
+      if (!hasNumber) missing.push('um número');
+      if (!hasSpecialChar) missing.push('um caractere especial');
+
+      if (missing.length > 0) {
+        newErrors.password = `A senha deve conter ${missing.join(', ')}`;
         isValid = false;
       }
     }
 
-    setErrors(newErrors);
+    setErrors(prev => ({ ...prev, ...newErrors }));
     return isValid;
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async e => {
     e.preventDefault();
     if (!validateForm()) return;
 
     setLoading(true);
-    setErrors({ name: '', email: '', password: '' });
+    setErrors({ name: '', email: '', password: '', form: '' });
 
     const endpoint = action === 'login' ? '/login' : '/signup';
-    const payload = action === 'login' 
-      ? { email: formData.email, password: formData.password }
-      : formData;
+    const payload =
+      action === 'login'
+        ? { email: formData.email, password: formData.password }
+        : formData;
 
     try {
-      const response = await axios.post(`http://localhost:4000${endpoint}`, payload);
-      
-      if(action === 'login') {
-        alert(`Bem-vindo, ${response.data.user.name}!`);
+      const response = await axios.post(
+        `http://localhost:4000${endpoint}`,
+        payload
+      );
+
+      if (action === 'login') {
+        // Redirect to main page on login success :contentReference[oaicite:0]{index=0}
+        navigate('/dashboard', { replace: true }); 
       } else {
         alert('Cadastro realizado com sucesso!');
         setAction('login');
       }
-      
+
       setFormData({ name: '', email: '', password: '' });
     } catch (err) {
-      const errorMessage = err.response?.data?.message || 'Erro ao processar sua solicitação';
-      setErrors(prev => ({ ...prev, form: errorMessage }));
+      const msg =
+        err.response?.data?.message || 'Erro ao processar sua solicitação';
+      setErrors(prev => ({ ...prev, form: msg }));
     } finally {
       setLoading(false);
     }
   };
 
-  const handleInputChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-    setErrors(prev => ({ ...prev, [e.target.name]: '' }));
+  const handleInputChange = e => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    setErrors(prev => ({ ...prev, [name]: '' }));
   };
 
   const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
+    setShowPassword(v => !v);
   };
 
   return (
     <div className="container">
       <div className="header">
         <div className="text">{action === 'login' ? 'Entrar' : 'Cadastrar'}</div>
-        <div className="underline"></div>
+        <div className="underline" />
       </div>
 
       <form onSubmit={handleSubmit} noValidate>
@@ -169,14 +171,16 @@ export default function LoginSingup() {
                 value={formData.password}
                 onChange={handleInputChange}
               />
-              <img 
-                src={showPassword ? eyeSlashFill : eyeFill} 
-                alt="Toggle visibilidade" 
+              <img
+                src={showPassword ? eyeSlashFill : eyeFill}
+                alt="Toggle visibilidade"
                 className="password-toggle"
                 onClick={togglePasswordVisibility}
               />
             </div>
-            {errors.password && <span className="error-field">{errors.password}</span>}
+            {errors.password && (
+              <span className="error-field">{errors.password}</span>
+            )}
           </div>
         </div>
 
@@ -188,19 +192,23 @@ export default function LoginSingup() {
             className={`submit ${loading ? 'loading' : ''}`}
             disabled={loading}
           >
-            {loading ? 'Processando...' : (action === 'login' ? 'Entrar' : 'Cadastrar')}
+            {loading
+              ? 'Processando...'
+              : action === 'login'
+              ? 'Entrar'
+              : 'Cadastrar'}
           </button>
         </div>
 
         <div className="toggle-link">
           {action === 'login' ? (
             <>
-              Não possui conta? {' '}
+              Não possui conta?{' '}
               <span onClick={() => setAction('signup')}>Cadastre-se</span>
             </>
           ) : (
             <>
-              Já possui conta? {' '}
+              Já possui conta?{' '}
               <span onClick={() => setAction('login')}>Entrar</span>
             </>
           )}
