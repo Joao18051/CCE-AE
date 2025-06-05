@@ -1,6 +1,6 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import LoginSignup from './Components/LoginSingup/LoginSingup';
+import LoginSignup from './Components/LoginSignup/LoginSignup';
 import Dashboard from './Components/Dashboard/Dashboard';
 
 function App() {
@@ -10,7 +10,7 @@ function App() {
       <Route path="/" element={<LoginSignup />} />
       {/* After login, user lands here */}
       <Route path="/dashboard" element={<Dashboard />} />
-      {/* Catch‑all: redirect unknown URLs back to login */}
+      {/* Catch-all: redirect unknown URLs back to login */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

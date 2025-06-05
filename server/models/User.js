@@ -1,6 +1,7 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('../config/db');
+const { sequelize } = require('../config/db');
 const bcrypt = require('bcrypt');
+const config = require('../config/appConfig');
 
 const User = sequelize.define('User', {
   id: {
@@ -23,11 +24,16 @@ const User = sequelize.define('User', {
   password: {
     type: DataTypes.STRING,
     allowNull: false
+  },
+  text: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    defaultValue: null
   }
 }, {
   hooks: {
     beforeCreate: async (user) => {
-      const salt = await bcrypt.genSalt(10);
+      const salt = await bcrypt.genSalt(config.auth.bcrypt.saltRounds);
       user.password = await bcrypt.hash(user.password, salt);
     }
   }

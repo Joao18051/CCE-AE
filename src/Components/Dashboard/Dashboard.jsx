@@ -1,35 +1,93 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import api from '../../services/api';
 import './Dashboard.css';
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [folders, setFolders] = useState([]);
   const [showForm, setShowForm] = useState(false);
+  const [error, setError] = useState(null);
   const [newData, setNewData] = useState({
     name: '',
     description: '',
     category: 'Pessoal',
     date: '',
-    file: null
+    text: ''
   });
 
-  const addFolder = () => {
-    const { name, description, category, date, file } = newData;
-    if (!name || !description || !date || !file) return;
+  // Get user data from localStorage
+  const userId = localStorage.getItem('userId');
+  const userName = localStorage.getItem('userName');
 
-    const id = Date.now();
-    const fileURL = URL.createObjectURL(file);
+  // Check if user is authenticated
+  useEffect(() => {
+    if (!userId) {
+      navigate('/');
+    }
+  }, [userId, navigate]);
 
-    setFolders(prev => [
-      ...prev,
-      { id, ...newData, fileURL, isEditing: false, editData: {} }
-    ]);
+  // Fetch user's texts when component mounts
+  useEffect(() => {
+    if (userId) {
+      fetchTexts();
+    }
+  }, [userId]);
 
-    setNewData({ name: '', description: '', category: 'Pessoal', date: '', file: null });
-    setShowForm(false);
+  const fetchTexts = async () => {
+    try {
+      const response = await api.get(`/text/${userId}`);
+      setFolders(response.data.texts.map(text => ({
+        ...text,
+        isEditing: false,
+        editData: {}
+      })));
+      setError(null);
+    } catch (error) {
+      setError(error.message || 'Erro ao carregar textos');
+      console.error('Error fetching texts:', error);
+    }
   };
 
-  const deleteFolder = id => {
-    setFolders(prev => prev.filter(f => f.id !== id));
+  const addFolder = async () => {
+    const { name, description, category, date, text } = newData;
+    if (!name || !description || !date || !text) {
+      setError('Todos os campos são obrigatórios');
+      return;
+    }
+
+    try {
+      const response = await api.post('/text', {
+        userId: parseInt(userId),
+        name,
+        description,
+        category,
+        date,
+        text
+      });
+
+      setFolders(prev => [
+        ...prev,
+        { ...response.data, isEditing: false, editData: {} }
+      ]);
+      setNewData({ name: '', description: '', category: 'Pessoal', date: '', text: '' });
+      setShowForm(false);
+      setError(null);
+    } catch (error) {
+      setError(error.message || 'Erro ao salvar texto');
+      console.error('Error saving text:', error);
+    }
+  };
+
+  const deleteFolder = async (id) => {
+    try {
+      await api.delete(`/text/${id}?userId=${userId}`);
+      setFolders(prev => prev.filter(f => f.id !== id));
+      setError(null);
+    } catch (error) {
+      setError(error.message || 'Erro ao excluir texto');
+      console.error('Error deleting text:', error);
+    }
   };
 
   const toggleEdit = id => {
@@ -40,22 +98,34 @@ export default function Dashboard() {
     ));
   };
 
-  const updateFolder = id => {
-    setFolders(prev => prev.map(f =>
-      f.id === id
-        ? {
-            ...f,
-            ...f.editData,
-            fileURL: f.editData.file ? URL.createObjectURL(f.editData.file) : f.fileURL,
-            isEditing: false,
-            editData: {}
-          }
-        : f
-    ));
+  const updateFolder = async (id) => {
+    const folder = folders.find(f => f.id === id);
+    if (!folder) return;
+
+    try {
+      const response = await api.put(`/text/${id}`, {
+        userId: parseInt(userId),
+        ...folder.editData
+      });
+
+      setFolders(prev => prev.map(f =>
+        f.id === id
+          ? {
+              ...response.data,
+              isEditing: false,
+              editData: {}
+            }
+          : f
+      ));
+      setError(null);
+    } catch (error) {
+      setError(error.message || 'Erro ao atualizar texto');
+      console.error('Error updating text:', error);
+    }
   };
 
   const handleChange = (e, isEdit = false, id = null) => {
-    const { name, value, files } = e.target;
+    const { name, value } = e.target;
     if (isEdit) {
       setFolders(prev => prev.map(f =>
         f.id === id
@@ -63,7 +133,7 @@ export default function Dashboard() {
               ...f,
               editData: {
                 ...f.editData,
-                [name]: name === 'file' ? files[0] : value
+                [name]: value
               }
             }
           : f
@@ -71,19 +141,38 @@ export default function Dashboard() {
     } else {
       setNewData(prev => ({
         ...prev,
-        [name]: name === 'file' ? files[0] : value
+        [name]: value
       }));
     }
+  };
+
+  const handleLogout = () => {
+    localStorage.clear();
+    navigate('/');
   };
 
   return (
     <div className="dashboard-container">
       <div className="dashboard-header">
-        <h2>Meus arquivos</h2>
-        <button className="toggle-button" onClick={() => setShowForm(v => !v)}>
-          {showForm ? 'Cancelar' : 'Criar Novo'}
-        </button>
+        <div className="header-left">
+          <h2>Meus Textos</h2>
+          <span className="user-name">Olá, {userName || 'Usuário'}</span>
+        </div>
+        <div className="header-right">
+          <button className="toggle-button" onClick={() => setShowForm(v => !v)}>
+            {showForm ? 'Cancelar' : 'Criar Novo'}
+          </button>
+          <button className="logout-button" onClick={handleLogout}>
+            Sair
+          </button>
+        </div>
       </div>
+
+      {error && (
+        <div className="error-message">
+          {error}
+        </div>
+      )}
 
       {showForm && (
         <div className="new-folder form-block">
@@ -113,12 +202,14 @@ export default function Dashboard() {
             value={newData.date}
             onChange={handleChange}
           />
-          <input
-            type="file"
-            name="file"
+          <textarea
+            name="text"
+            placeholder="Digite seu texto aqui..."
+            value={newData.text}
             onChange={handleChange}
+            rows={5}
           />
-          <button onClick={addFolder}>Salvar Pasta</button>
+          <button onClick={addFolder}>Salvar</button>
         </div>
       )}
 
@@ -155,10 +246,12 @@ export default function Dashboard() {
                   defaultValue={folder.editData.date}
                   onChange={e => handleChange(e, true, folder.id)}
                 />
-                <input
-                  type="file"
-                  name="file"
+                <textarea
+                  name="text"
+                  defaultValue={folder.editData.text}
                   onChange={e => handleChange(e, true, folder.id)}
+                  rows={5}
+                  placeholder="Digite seu texto aqui..."
                 />
                 <div className="buttons">
                   <button onClick={() => updateFolder(folder.id)}>Salvar</button>
@@ -171,7 +264,7 @@ export default function Dashboard() {
                 <p>Descrição: {folder.description}</p>
                 <p>Categoria: {folder.category}</p>
                 <p>Data: {folder.date}</p>
-                <p>Arquivo: {folder.file.name}</p>
+                <p className="text-content">Texto: {folder.text}</p>
                 <div className="buttons">
                   <button onClick={() => toggleEdit(folder.id)}>Editar</button>
                   <button onClick={() => deleteFolder(folder.id)}>Excluir</button>

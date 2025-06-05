@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/db');
 
-const Folder = sequelize.define('Folder', {
+const Text = sequelize.define('Text', {
   id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
@@ -12,24 +12,20 @@ const Folder = sequelize.define('Folder', {
     allowNull: false
   },
   description: {
-    type: DataTypes.TEXT,
-    allowNull: true
+    type: DataTypes.STRING,
+    allowNull: false
   },
   category: {
     type: DataTypes.STRING,
-    allowNull: true
+    allowNull: false
   },
   date: {
     type: DataTypes.DATEONLY,
-    allowNull: true
+    allowNull: false
   },
-  fileName: {
-    type: DataTypes.STRING,
-    allowNull: true
-  },
-  fileData: {
-    type: DataTypes.BLOB('long'),
-    allowNull: true
+  text: {
+    type: DataTypes.TEXT,
+    allowNull: false
   },
   userId: {
     type: DataTypes.INTEGER,
@@ -41,4 +37,4 @@ const Folder = sequelize.define('Folder', {
   }
 });
 
-module.exports = Folder;
+module.exports = Text; 

@@ -1,17 +1,16 @@
-// src/Components/LoginSingup/LoginSingup.jsx
+// src/Components/LoginSignup/LoginSignup.jsx
 import React, { useState } from 'react';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom'; // for programmatic navigation
-
-import './LoginSingup.css';
+import { useNavigate } from 'react-router-dom';
+import api from '../../services/api';
+import './LoginSignup.css';
 import emailIcon from '../Assets/email.svg';
 import passwordIcon from '../Assets/password.svg';
 import personIcon from '../Assets/person.svg';
 import eyeFill from '../Assets/eye-fill.svg';
 import eyeSlashFill from '../Assets/eye-slash-fill.svg';
 
-export default function LoginSingup() {
-  const navigate = useNavigate(); // turn0search0
+export default function LoginSignup() {
+  const navigate = useNavigate();
   const [action, setAction] = useState('login');
   const [formData, setFormData] = useState({
     name: '',
@@ -89,24 +88,28 @@ export default function LoginSingup() {
         : formData;
 
     try {
-      const response = await axios.post(
-        `http://localhost:4000${endpoint}`,
-        payload
-      );
+      const response = await api.post(endpoint, payload);
+      const { user, token } = response.data;
 
       if (action === 'login') {
-        // Redirect to main page on login success :contentReference[oaicite:0]{index=0}
-        navigate('/dashboard', { replace: true }); 
+        // Store user data in localStorage
+        localStorage.setItem('userId', user.id);
+        localStorage.setItem('token', token);
+        localStorage.setItem('userName', user.name);
+        
+        // Redirect to dashboard
+        navigate('/dashboard', { replace: true });
       } else {
         alert('Cadastro realizado com sucesso!');
         setAction('login');
       }
 
       setFormData({ name: '', email: '', password: '' });
-    } catch (err) {
-      const msg =
-        err.response?.data?.message || 'Erro ao processar sua solicitação';
-      setErrors(prev => ({ ...prev, form: msg }));
+    } catch (error) {
+      setErrors(prev => ({ 
+        ...prev, 
+        form: error.message || 'Erro ao processar sua solicitação' 
+      }));
     } finally {
       setLoading(false);
     }
