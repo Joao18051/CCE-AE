@@ -3,6 +3,7 @@ const authRouter = express.Router();
 const { authService, textController } = require('../config/serviceContainer');
 const authController = require('../controllers/AuthController');
 const { protect } = require('../middleware/authMiddleware');
+const conversionHistoryController = require('../controllers/ConversionHistoryController');
 
 //Autenticação
 authRouter.post('/signup', authController.signup);
@@ -14,6 +15,11 @@ authRouter.post('/text', textController.saveText);
 authRouter.get('/text/:userId', textController.getText);
 authRouter.put('/text/:id', textController.updateText);
 authRouter.delete('/text/:id', textController.deleteText);
+
+//Conversion History
+authRouter.use('/conversion-history', protect);
+authRouter.post('/conversion-history', conversionHistoryController.saveConversion);
+authRouter.get('/conversion-history', conversionHistoryController.getHistory);
 
 //Validação do ID
 authRouter.param('userId', (req, res, next, userId) => {

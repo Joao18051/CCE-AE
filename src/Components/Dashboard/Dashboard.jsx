@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../../services/api';
+import api, { saveConversionHistory, getConversionHistory } from '../../services/api';
 import './Dashboard.css';
 
 export default function Dashboard() {
@@ -21,6 +21,10 @@ export default function Dashboard() {
   const [showAscii, setShowAscii] = useState({});
   const [showBinary, setShowBinary] = useState({});
   const [showCoding, setShowCoding] = useState({});
+  const [historyModalOpen, setHistoryModalOpen] = useState(false);
+  const [conversionHistory, setConversionHistory] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState(null);
 
   // Get user data from localStorage
   const userId = localStorage.getItem('userId');
@@ -168,9 +172,30 @@ export default function Dashboard() {
   };
 
 
-  const handleConvert = (id, text) => {
-    setAsciiTexts(prev => ({ ...prev, [id]: convertToAscii(text) }));
-    setBinaryTexts(prev => ({ ...prev, [id]: convertToBinary(text) }));
+  const handleConvert = async (id, text) => {
+    const ascii = convertToAscii(text);
+    const binary = convertToBinary(text);
+    setAsciiTexts(prev => ({ ...prev, [id]: ascii }));
+    setBinaryTexts(prev => ({ ...prev, [id]: binary }));
+    // Save to history
+    try {
+      // Build codification result for saving
+      const binaryBlocks = getBinary4x4BlocksFromBinary(binary);
+      const codificationResult = binaryBlocks.map(block => ({
+        D: block.map(row => row.split('')),
+        R: buildRowMatrix(block),
+        C: buildColMatrix(block)
+      }));
+      await saveConversionHistory({
+        inputText: text,
+        asciiResult: ascii,
+        binaryResult: binary,
+        codificationResult
+      });
+    } catch (err) {
+      // Optionally handle error
+      console.error('Erro ao salvar histórico de conversão:', err);
+    }
   };
 
 
@@ -223,6 +248,24 @@ export default function Dashboard() {
     return C;
   };
 
+  const openHistoryModal = async () => {
+    setHistoryModalOpen(true);
+    setHistoryLoading(true);
+    setHistoryError(null);
+    try {
+      const history = await getConversionHistory();
+      setConversionHistory(history);
+    } catch (err) {
+      setHistoryError(err.message || 'Erro ao carregar histórico');
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  const closeHistoryModal = () => {
+    setHistoryModalOpen(false);
+  };
+
   return (
     <div className="dashboard-container">
       <div className="dashboard-header">
@@ -233,6 +276,9 @@ export default function Dashboard() {
         <div className="header-right">
           <button className="toggle-button" onClick={() => setShowForm(v => !v)}>
             {showForm ? 'Cancelar' : 'Criar Novo'}
+          </button>
+          <button className="history-button" onClick={openHistoryModal}>
+            Histórico
           </button>
           <button className="logout-button" onClick={handleLogout}>
             Sair
@@ -459,6 +505,34 @@ export default function Dashboard() {
           </div>
         ))}
       </div>
+      {historyModalOpen && (
+        <div className="modal-overlay" onClick={closeHistoryModal}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <button className="close-modal" onClick={closeHistoryModal}>×</button>
+            <h3 style={{marginBottom: '10px'}}>Histórico de Conversões</h3>
+            {historyLoading ? (
+              <div>Carregando...</div>
+            ) : historyError ? (
+              <div className="error-message">{historyError}</div>
+            ) : (
+              <div className="history-list">
+                {conversionHistory.length === 0 ? (
+                  <div>Nenhuma conversão encontrada.</div>
+                ) : (
+                  conversionHistory.map((entry, idx) => (
+                    <div key={entry.id || idx} className="history-entry">
+                      <div><b>Data:</b> {new Date(entry.createdAt).toLocaleString()}</div>
+                      <div><b>Texto:</b> {entry.inputText}</div>
+                      <div><b>ASCII:</b> <span className="ascii">{entry.asciiResult}</span></div>
+                      <div><b>Binário:</b> <span className="binary">{entry.binaryResult}</span></div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

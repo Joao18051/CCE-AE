@@ -1,6 +1,7 @@
 const User = require('./User');
 const Folder = require('./Folders');
 const Text = require('./Text');
+const ConversionHistory = require('./ConversionHistory');
 
 // Define associations
 User.hasMany(Folder, {
@@ -25,8 +26,20 @@ Text.belongsTo(User, {
   as: 'user'
 });
 
+User.hasMany(ConversionHistory, {
+  foreignKey: 'userId',
+  as: 'conversionHistories',
+  onDelete: 'CASCADE'
+});
+
+ConversionHistory.belongsTo(User, {
+  foreignKey: 'userId',
+  as: 'user'
+});
+
 module.exports = {
   User,
   Folder,
-  Text
+  Text,
+  ConversionHistory
 }; 

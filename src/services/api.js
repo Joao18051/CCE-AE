@@ -44,4 +44,15 @@ api.interceptors.response.use(
   }
 );
 
+// Conversion History API
+export const saveConversionHistory = async (data) => {
+  const res = await api.post('/conversion-history', data);
+  return res.data;
+};
+
+export const getConversionHistory = async () => {
+  const res = await api.get('/conversion-history');
+  return res.data;
+};
+
 export default api; 
