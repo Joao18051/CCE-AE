@@ -243,3 +243,235 @@
   color: #333;
   font-size: 18px;
 }
+
+.ascii-result {
+  margin-bottom: 12px;
+}
+
+.binary-result {
+  margin-bottom: 12px;
+}
+
+.coding-result {
+  margin-top: 12px;
+  padding: 12px;
+  background: #f3f0ff;
+  border-radius: 10px;
+  font-family: 'Fira Mono', 'Consolas', 'Menlo', monospace;
+  font-size: 15px;
+  color: #4a00e0;
+  box-shadow: 0 2px 8px rgba(74,0,224,0.07);
+}
+
+.ascii-result, .binary-result {
+  margin-top: 12px;
+  padding: 12px;
+  background: #f3f0ff;
+  border-radius: 10px;
+  font-family: 'Fira Mono', 'Consolas', 'Menlo', monospace;
+  font-size: 15px;
+  color: #4a00e0;
+  word-break: break-all;
+  box-shadow: 0 2px 8px rgba(74,0,224,0.07);
+}
+
+.ascii-result strong, .binary-result strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #6c2bd7;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* Add a little space between ASCII and binary blocks */
+.ascii-result + .binary-result {
+  margin-top: 8px;
+}
+
+.binary-blocks-row {
+  display: flex;
+  gap: 18px;
+  margin-top: 12px;
+}
+
+.binary-block {
+  background: #f3f0ff;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(74,0,224,0.07);
+  padding: 12px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: 'Fira Mono', 'Consolas', 'Menlo', monospace;
+  font-size: 15px;
+  color: #4a00e0;
+  min-width: 56px;
+  margin-bottom: 4px;
+  border: none;
+}
+
+.coding-result strong {
+  display: block;
+  margin-bottom: 8px;
+  color: #6c2bd7;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.coding-result .binary-blocks-row {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 0;
+}
+
+.coding-matrices-group {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 0;
+}
+
+.coding-matrix-row {
+  display: flex;
+  flex-direction: row;
+  gap: 32px;
+  margin-bottom: 0;
+}
+
+.coding-matrix-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 120px;
+}
+
+.coding-matrix-label {
+  margin-bottom: 4px;
+}
+
+.coding-data-block {
+  background: #fffbe7;
+}
+
+.coding-row-block, .coding-col-block {
+  background: #e7edff;
+}
+
+.coding-matrices-col {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 0;
+}
+
+.coding-matrix {
+  border-collapse: collapse;
+  margin-bottom: 18px;
+  box-shadow: 0 2px 8px rgba(74,0,224,0.07);
+}
+.coding-matrix td {
+  border: 1px solid #d1c4e9;
+  padding: 6px 10px;
+  font-family: 'Fira Mono', 'Consolas', 'Menlo', monospace;
+  font-size: 15px;
+  text-align: center;
+  min-width: 28px;
+  min-height: 28px;
+}
+.coding-d {
+  background: #fffbe7;
+  color: #4a00e0;
+}
+.coding-r {
+  background: #e7edff;
+  color: #4a00e0;
+}
+.coding-c {
+  background: #ede7f6;
+  color: #4a00e0;
+}
+.coding-empty {
+  background: #fff;
+  color: transparent;
+}
+
+.coding-matrix-labels-row {
+  display: flex;
+  flex-direction: row;
+  gap: 18px;
+  margin-bottom: 4px;
+  justify-content: flex-start;
+}
+.coding-matrix-label {
+  min-width: 120px;
+  font-size: 13px;
+  color: #4a00e0;
+  font-weight: 600;
+  text-align: center;
+}
+
+.binary-result .coding-matrix-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 32px;
+  max-width: 480px;
+}
+.binary-result .coding-matrix-col {
+  margin-bottom: 24px;
+}
+
+.collapse-btn {
+  margin-bottom: 8px;
+  background: #ede7f6;
+  color: #4a00e0;
+  border: none;
+  border-radius: 8px;
+  padding: 4px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.collapse-btn:hover {
+  background: #d1c4e9;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #4a00e0;
+  background: #ede7f6;
+  border-radius: 10px;
+  padding: 4px 16px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s;
+}
+.section-header:hover {
+  background: #d1c4e9;
+}
+.arrow-icon {
+  font-size: 18px;
+  margin-right: 2px;
+}
+.section-label {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.dashboard-card {
+  width: 700px;
+  margin: 40px auto 0 auto;
+  background: #fff;
+  border-radius: 24px;
+  box-shadow: 0 4px 24px 0 rgba(0,0,0,0.08);
+  padding: 32px 32px 24px 32px;
+  border: 1px solid #ececec;
+  min-width: 700px;
+  max-width: 700px;
+}

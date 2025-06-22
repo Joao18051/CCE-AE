@@ -15,6 +15,12 @@ export default function Dashboard() {
     date: '',
     text: ''
   });
+  const [asciiTexts, setAsciiTexts] = useState({});
+  const [binaryTexts, setBinaryTexts] = useState({});
+  // Collapse state for each section, per folder.id
+  const [showAscii, setShowAscii] = useState({});
+  const [showBinary, setShowBinary] = useState({});
+  const [showCoding, setShowCoding] = useState({});
 
   // Get user data from localStorage
   const userId = localStorage.getItem('userId');
@@ -151,6 +157,72 @@ export default function Dashboard() {
     navigate('/');
   };
 
+  
+  const convertToAscii = (text) => {
+    return text.split('').map(char => char.charCodeAt(0)).join(' ');
+  };
+
+  
+  const convertToBinary = (text) => {
+    return text.split('').map(char => char.charCodeAt(0).toString(2).padStart(8, '0')).join(' ');
+  };
+
+
+  const handleConvert = (id, text) => {
+    setAsciiTexts(prev => ({ ...prev, [id]: convertToAscii(text) }));
+    setBinaryTexts(prev => ({ ...prev, [id]: convertToBinary(text) }));
+  };
+
+
+  const getBinary4x2Blocks = (text) => {
+    return text.split('').map(char => {
+      const bin = char.charCodeAt(0).toString(2).padStart(8, '0');
+      return [bin.slice(0, 4), bin.slice(4, 8)];
+    });
+  };
+
+  const getBinary4x4BlocksFromBinary = (binaryString) => {
+    if (!binaryString) return [];
+    const binaries = binaryString.split(' ');
+    const blocks = binaries.map(bin => [bin.slice(0, 4), bin.slice(4, 8)]);
+    if (blocks.length % 2 !== 0) {
+      blocks.push(['0000', '0000']);
+    }
+    const result = [];
+    for (let i = 0; i < blocks.length; i += 2) {
+      result.push([
+        blocks[i][0],
+        blocks[i][1],
+        blocks[i+1][0],
+        blocks[i+1][1]
+      ]);
+    }
+    return result;
+  };
+
+  const buildRowMatrix = (block) => {
+    const D = block.map(row => row.split('').map(Number));
+    const R = D.map(row => {
+      const r1 = row[0] ^ row[1] ^ row[2] ^ row[3];
+      const r2 = row[0] ^ row[3];
+      const r3 = row[0] ^ row[2];
+      return [r1, r2, r3];
+    });
+    return R;
+  };
+
+  const buildColMatrix = (block) => {
+    const D = block.map(row => row.split('').map(Number));
+    const C = [[], [], []];
+    for (let j = 0; j < 4; j++) {
+      const col = [D[0][j], D[1][j], D[2][j], D[3][j]];
+      C[0][j] = col[0] ^ col[1] ^ col[2] ^ col[3];
+      C[1][j] = col[0] ^ col[3];
+      C[2][j] = col[0] ^ col[2];
+    }
+    return C;
+  };
+
   return (
     <div className="dashboard-container">
       <div className="dashboard-header">
@@ -264,11 +336,124 @@ export default function Dashboard() {
                 <p>Descrição: {folder.description}</p>
                 <p>Categoria: {folder.category}</p>
                 <p>Data: {folder.date}</p>
-                <p className="text-content">Texto: {folder.text}</p>
+                <p>Texto: {folder.text}</p>
                 <div className="buttons">
                   <button onClick={() => toggleEdit(folder.id)}>Editar</button>
                   <button onClick={() => deleteFolder(folder.id)}>Excluir</button>
+                  <button onClick={() => handleConvert(folder.id, folder.text)}>Converter</button>
                 </div>
+                {/* ASCII Section */}
+                {binaryTexts[folder.id] && (
+                  <div className="ascii-result">
+                    <div className="section-header" onClick={() => setShowAscii(prev => ({...prev, [folder.id]: !(folder.id in prev ? prev[folder.id] : false)}))}>
+                      <span className="arrow-icon">{(showAscii[folder.id] ?? false) ? '▼' : '►'}</span>
+                      <span className="section-label">ASCII</span>
+                    </div>
+                    {(showAscii[folder.id] ?? false) && (
+                      <>
+                        <div>{folder.text.split('').map(char => char.charCodeAt(0)).join(' ')}</div>
+                      </>
+                    )}
+                  </div>
+                )}
+                {/* Binário Section */}
+                {binaryTexts[folder.id] && (
+                  <div className="binary-result">
+                    <div className="section-header" onClick={() => setShowBinary(prev => ({...prev, [folder.id]: !(folder.id in prev ? prev[folder.id] : false)}))}>
+                      <span className="arrow-icon">{(showBinary[folder.id] ?? false) ? '▼' : '►'}</span>
+                      <span className="section-label">Binário</span>
+                    </div>
+                    {(showBinary[folder.id] ?? false) && (
+                      <>
+                        <div className="coding-matrix-row">
+                          {getBinary4x2Blocks(folder.text).map((block, idx) => (
+                            <div className="coding-matrix-col" key={idx}>
+                              <span className="coding-matrix-label">ASCII: {folder.text.charCodeAt(idx)}</span>
+                              <table className="coding-matrix binary-matrix">
+                                <tbody>
+                                  {block.map((row, rIdx) => (
+                                    <tr key={rIdx}>
+                                      {row.split('').map((bit, bIdx) => (
+                                        <td key={bIdx} className="coding-d">{bit}</td>
+                                      ))}
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+                {/* Codificação Section */}
+                {binaryTexts[folder.id] && (
+                  <div className="coding-result">
+                    <div className="section-header" onClick={() => setShowCoding(prev => ({...prev, [folder.id]: !(folder.id in prev ? prev[folder.id] : false)}))}>
+                      <span className="arrow-icon">{(showCoding[folder.id] ?? false) ? '▼' : '►'}</span>
+                      <span className="section-label">Codificação</span>
+                    </div>
+                    {(showCoding[folder.id] ?? false) && (
+                      <>
+                        <div className="coding-matrices-col">
+                          {getBinary4x4BlocksFromBinary(binaryTexts[folder.id]).map((block, idx, arr) => {
+                            const D = block.map(row => row.split(''));
+                            const R = buildRowMatrix(block);
+                            const C = buildColMatrix(block);
+                            const showLabels = idx % 3 === 0; // Only show labels on the first of each row of 3
+                            return (
+                              <div className="coding-matrix-row" key={idx}>
+                                <div className="coding-matrix-col">
+                                  {showLabels && <span className="coding-matrix-label">Matriz de dados</span>}
+                                  <table className="coding-matrix coding-matrix-d">
+                                    <tbody>
+                                      {D.map((row, rIdx) => (
+                                        <tr key={rIdx}>
+                                          {row.map((cell, cIdx) => (
+                                            <td key={cIdx} className="coding-d">{cell}</td>
+                                          ))}
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+                                <div className="coding-matrix-col">
+                                  {showLabels && <span className="coding-matrix-label">Codificação Linhas</span>}
+                                  <table className="coding-matrix coding-matrix-r">
+                                    <tbody>
+                                      {R.map((row, rIdx) => (
+                                        <tr key={rIdx}>
+                                          {row.map((cell, cIdx) => (
+                                            <td key={cIdx} className="coding-r">{cell}</td>
+                                          ))}
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+                                <div className="coding-matrix-col">
+                                  {showLabels && <span className="coding-matrix-label">Codificação colunas</span>}
+                                  <table className="coding-matrix coding-matrix-c">
+                                    <tbody>
+                                      {C.map((row, rIdx) => (
+                                        <tr key={rIdx}>
+                                          {row.map((cell, cIdx) => (
+                                            <td key={cIdx} className="coding-c">{cell}</td>
+                                          ))}
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
               </>
             )}
           </div>
