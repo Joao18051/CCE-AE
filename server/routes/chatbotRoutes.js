@@ -4,4 +4,4 @@ const chatbotController = require('../controllers/ChatbotController');
 
 router.post('/chat', chatbotController.chat);
 
-module.exports = router; 
+module.exports = router;

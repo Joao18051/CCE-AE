@@ -3,7 +3,6 @@ const axios = require('axios');
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 
-// System prompt with paper context
 const PAPER_CONTEXT = `Proposta de um Algoritmo de Decodificação de Códigos Corretores de Erros de Duas Dimensões para Uso em Aplicações Críticas
 
 https://files.catbox.moe/73pfkt.pdf
