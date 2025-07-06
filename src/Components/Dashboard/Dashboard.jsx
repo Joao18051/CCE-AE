@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api, { saveConversionHistory, getConversionHistory } from '../../services/api';
 import './Dashboard.css';
+import Chatbot from '../Chatbot/Chatbot';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -17,27 +18,26 @@ export default function Dashboard() {
   });
   const [asciiTexts, setAsciiTexts] = useState({});
   const [binaryTexts, setBinaryTexts] = useState({});
-  // Collapse state for each section, per folder.id
+  //Funções da codificação
   const [showAscii, setShowAscii] = useState({});
   const [showBinary, setShowBinary] = useState({});
   const [showCoding, setShowCoding] = useState({});
+  //Funções do histórico
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
   const [conversionHistory, setConversionHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState(null);
+  const [showHistoryCodification, setShowHistoryCodification] = useState({});
 
-  // Get user data from localStorage
   const userId = localStorage.getItem('userId');
   const userName = localStorage.getItem('userName');
 
-  // Check if user is authenticated
   useEffect(() => {
     if (!userId) {
       navigate('/');
     }
   }, [userId, navigate]);
 
-  // Fetch user's texts when component mounts
   useEffect(() => {
     if (userId) {
       fetchTexts();
@@ -46,7 +46,7 @@ export default function Dashboard() {
 
   const fetchTexts = async () => {
     try {
-      const response = await api.get(`/text/${userId}`);
+      const response = await api.get(`/auth/text/${userId}`);
       setFolders(response.data.texts.map(text => ({
         ...text,
         isEditing: false,
@@ -67,7 +67,7 @@ export default function Dashboard() {
     }
 
     try {
-      const response = await api.post('/text', {
+      const response = await api.post('/auth/text', {
         userId: parseInt(userId),
         name,
         description,
@@ -91,7 +91,7 @@ export default function Dashboard() {
 
   const deleteFolder = async (id) => {
     try {
-      await api.delete(`/text/${id}?userId=${userId}`);
+      await api.delete(`/auth/text/${id}?userId=${userId}`);
       setFolders(prev => prev.filter(f => f.id !== id));
       setError(null);
     } catch (error) {
@@ -113,7 +113,7 @@ export default function Dashboard() {
     if (!folder) return;
 
     try {
-      const response = await api.put(`/text/${id}`, {
+      const response = await api.put(`/auth/text/${id}`, {
         userId: parseInt(userId),
         ...folder.editData
       });
@@ -161,7 +161,7 @@ export default function Dashboard() {
     navigate('/');
   };
 
-  
+  //Conversões
   const convertToAscii = (text) => {
     return text.split('').map(char => char.charCodeAt(0)).join(' ');
   };
@@ -177,9 +177,8 @@ export default function Dashboard() {
     const binary = convertToBinary(text);
     setAsciiTexts(prev => ({ ...prev, [id]: ascii }));
     setBinaryTexts(prev => ({ ...prev, [id]: binary }));
-    // Save to history
+    //Salva no histórico
     try {
-      // Build codification result for saving
       const binaryBlocks = getBinary4x4BlocksFromBinary(binary);
       const codificationResult = binaryBlocks.map(block => ({
         D: block.map(row => row.split('')),
@@ -193,7 +192,6 @@ export default function Dashboard() {
         codificationResult
       });
     } catch (err) {
-      // Optionally handle error
       console.error('Erro ao salvar histórico de conversão:', err);
     }
   };
@@ -388,7 +386,7 @@ export default function Dashboard() {
                   <button onClick={() => deleteFolder(folder.id)}>Excluir</button>
                   <button onClick={() => handleConvert(folder.id, folder.text)}>Converter</button>
                 </div>
-                {/* ASCII Section */}
+                {/*ASCII*/}
                 {binaryTexts[folder.id] && (
                   <div className="ascii-result">
                     <div className="section-header" onClick={() => setShowAscii(prev => ({...prev, [folder.id]: !(folder.id in prev ? prev[folder.id] : false)}))}>
@@ -402,7 +400,7 @@ export default function Dashboard() {
                     )}
                   </div>
                 )}
-                {/* Binário Section */}
+                {/*Binário*/}
                 {binaryTexts[folder.id] && (
                   <div className="binary-result">
                     <div className="section-header" onClick={() => setShowBinary(prev => ({...prev, [folder.id]: !(folder.id in prev ? prev[folder.id] : false)}))}>
@@ -433,7 +431,7 @@ export default function Dashboard() {
                     )}
                   </div>
                 )}
-                {/* Codificação Section */}
+                {/*Codificação*/}
                 {binaryTexts[folder.id] && (
                   <div className="coding-result">
                     <div className="section-header" onClick={() => setShowCoding(prev => ({...prev, [folder.id]: !(folder.id in prev ? prev[folder.id] : false)}))}>
@@ -447,7 +445,7 @@ export default function Dashboard() {
                             const D = block.map(row => row.split(''));
                             const R = buildRowMatrix(block);
                             const C = buildColMatrix(block);
-                            const showLabels = idx % 3 === 0; // Only show labels on the first of each row of 3
+                            const showLabels = idx % 3 === 0;
                             return (
                               <div className="coding-matrix-row" key={idx}>
                                 <div className="coding-matrix-col">
@@ -525,6 +523,67 @@ export default function Dashboard() {
                       <div><b>Texto:</b> {entry.inputText}</div>
                       <div><b>ASCII:</b> <span className="ascii">{entry.asciiResult}</span></div>
                       <div><b>Binário:</b> <span className="binary">{entry.binaryResult}</span></div>
+                      {entry.codificationResult && Array.isArray(entry.codificationResult) && (
+                        <>
+                          <button
+                            className="toggle-button"
+                            style={{margin: '10px 0 0 0', padding: '4px 12px', fontSize: '13px'}}
+                            onClick={() => setShowHistoryCodification(prev => ({...prev, [idx]: !prev[idx]}))}
+                          >
+                            {showHistoryCodification[idx] ? 'Ocultar Codificação' : 'Mostrar Codificação'}
+                          </button>
+                          {showHistoryCodification[idx] && (
+                            <div className="coding-matrices-col" style={{marginTop: 10}}>
+                              {entry.codificationResult.map((block, bIdx) => (
+                                <div className="coding-matrix-row" key={bIdx} style={{marginBottom: 10}}>
+                                  <div className="coding-matrix-col">
+                                    <span className="coding-matrix-label">Matriz de dados</span>
+                                    <table className="coding-matrix coding-matrix-d">
+                                      <tbody>
+                                        {block.D.map((row, rIdx) => (
+                                          <tr key={rIdx}>
+                                            {row.map((cell, cIdx) => (
+                                              <td key={cIdx} className="coding-d">{cell}</td>
+                                            ))}
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                  <div className="coding-matrix-col">
+                                    <span className="coding-matrix-label">Codificação Linhas</span>
+                                    <table className="coding-matrix coding-matrix-r">
+                                      <tbody>
+                                        {block.R.map((row, rIdx) => (
+                                          <tr key={rIdx}>
+                                            {row.map((cell, cIdx) => (
+                                              <td key={cIdx} className="coding-r">{cell}</td>
+                                            ))}
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                  <div className="coding-matrix-col">
+                                    <span className="coding-matrix-label">Codificação colunas</span>
+                                    <table className="coding-matrix coding-matrix-c">
+                                      <tbody>
+                                        {block.C.map((row, rIdx) => (
+                                          <tr key={rIdx}>
+                                            {row.map((cell, cIdx) => (
+                                              <td key={cIdx} className="coding-c">{cell}</td>
+                                            ))}
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </>
+                      )}
                     </div>
                   ))
                 )}
@@ -533,6 +592,7 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+      <Chatbot />
     </div>
   );
 }

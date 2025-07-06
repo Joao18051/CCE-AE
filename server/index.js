@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express')
 const cors = require('cors')
 const bodyParser = require('body-parser')
@@ -6,6 +7,7 @@ const authRoutes = require('./routes/authRoutes')
 const { Database } = require('./config/db')
 const { errorHandler } = require('./middleware/errorHandler')
 const AppError = require('./utils/AppError')
+const chatbotRoutes = require('./routes/chatbotRoutes')
 
 // Import models to ensure they are registered
 require('./models');
@@ -35,6 +37,7 @@ app.use(cors(config.api.cors))
 
 // Mount routes
 app.use('/api/auth', authRoutes)
+app.use('/api/chatbot', chatbotRoutes)
 
 // Handle undefined routes
 app.use((req, res, next) => {

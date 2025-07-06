@@ -5,7 +5,6 @@ const authController = require('../controllers/AuthController');
 const { protect } = require('../middleware/authMiddleware');
 const conversionHistoryController = require('../controllers/ConversionHistoryController');
 
-//Autenticação
 authRouter.post('/signup', authController.signup);
 authRouter.post('/login', authController.login);
 
@@ -16,7 +15,7 @@ authRouter.get('/text/:userId', textController.getText);
 authRouter.put('/text/:id', textController.updateText);
 authRouter.delete('/text/:id', textController.deleteText);
 
-//Conversion History
+//Histórico
 authRouter.use('/conversion-history', protect);
 authRouter.post('/conversion-history', conversionHistoryController.saveConversion);
 authRouter.get('/conversion-history', conversionHistoryController.getHistory);

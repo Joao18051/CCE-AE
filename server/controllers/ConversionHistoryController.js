@@ -19,7 +19,6 @@ const saveConversion = catchAsync(async (req, res) => {
 const getHistory = catchAsync(async (req, res) => {
   const userId = req.user.id;
   const history = await service.getAllByUser(userId);
-  // Parse codificationResult JSON for each entry
   const parsed = history.map(entry => ({
     ...entry.toJSON(),
     codificationResult: JSON.parse(entry.codificationResult)

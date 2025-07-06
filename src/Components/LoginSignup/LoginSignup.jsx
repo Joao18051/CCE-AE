@@ -81,7 +81,7 @@ export default function LoginSignup() {
     setLoading(true);
     setErrors({ name: '', email: '', password: '', form: '' });
 
-    const endpoint = action === 'login' ? '/login' : '/signup';
+    const endpoint = action === 'login' ? '/auth/login' : '/auth/signup';
     const payload =
       action === 'login'
         ? { email: formData.email, password: formData.password }
